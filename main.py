@@ -1,38 +1,37 @@
-# To run and test the code you need to update 4 places:
-# 1. Change MY_EMAIL/MY_PASSWORD to your own details.
-# 2. Go to your email provider and make it allow less secure apps.
-# 3. Update the SMTP ADDRESS to match your email provider.
-# 4. Update birthdays.csv to contain today's month and day.
-# See the solution video in the 100 Days of Python Course for explainations.
 
-
-from datetime import datetime
-import pandas
+import datetime as dt
+import pandas as pd
 import random
 import smtplib
-import os
 
-# import os and use it to get the Github repository secrets
-MY_EMAIL = os.environ.get("MY_EMAIL")
-MY_PASSWORD = os.environ.get("MY_PASSWORD")
+MY_EMAIL = "shreshtharaj88@gmail.com"
+PASSWORD = "orkryttqcqlrerot"
 
-today = datetime.now()
-today_tuple = (today.month, today.day)
+now = dt.datetime.now()
+curr_day = now.day
+curr_month = now.month
 
-data = pandas.read_csv("birthdays.csv")
-birthdays_dict = {(data_row["month"], data_row["day"])                  : data_row for (index, data_row) in data.iterrows()}
-if today_tuple in birthdays_dict:
-    birthday_person = birthdays_dict[today_tuple]
-    file_path = f"letter_templates/letter_{random.randint(1, 3)}.txt"
-    with open(file_path) as letter_file:
-        contents = letter_file.read()
-        contents = contents.replace("[NAME]", birthday_person["name"])
+df = pd.read_csv("birthdays.csv")
+days_list = df.day.to_list()
+months_list = df.month.to_list()
+curr_day_indexes = [index for index, day in enumerate(days_list) if day == curr_day]
+today_bdday_indexes = [index for index in curr_day_indexes if months_list[index] == curr_month]
+for index in today_bdday_indexes:
+    name = df.iloc[index, 0]
+    to_email = df.iloc[index, 1]
+    letter = f"letter_templates/letter_{random.randint(1, 3)}.txt"
+    with open(letter, "r") as f:
+        lines = f.readlines()
+        lines[0] = lines[0].replace("[NAME]", name)
+        lines[-1] = lines[-1].replace("Angela", "Shreshtha")
 
-    with smtplib.SMTP("YOUR EMAIL PROVIDER SMTP SERVER ADDRESS") as connection:
+    #keeping track of send letters by saving them by name
+    with open(f"send_letters/birthday_letter_{name}.txt", "w") as f:
+        for line in lines:
+            f.write(line)
+
+    with smtplib.SMTP("smtp.gmail.com", 587) as connection:
         connection.starttls()
-        connection.login(MY_EMAIL, MY_PASSWORD)
-        connection.sendmail(
-            from_addr=MY_EMAIL,
-            to_addrs=birthday_person["email"],
-            msg=f"Subject:Happy Birthday!\n\n{contents}"
-        )
+        connection.login(user=MY_EMAIL, password=PASSWORD)
+        connection.sendmail(from_addr=MY_EMAIL, to_addrs=to_email, msg=f"Subject:Happy Birthday!\n\n"
+                                                                       f"{"".join(lines)}")
