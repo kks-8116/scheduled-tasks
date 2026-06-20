@@ -1,11 +1,11 @@
-
+import os
 import datetime as dt
 import pandas as pd
 import random
 import smtplib
 
-MY_EMAIL = "shreshtharaj88@gmail.com"
-PASSWORD = "orkryttqcqlrerot"
+MY_EMAIL = os.environ.get("MY_EMAIL")
+PASSWORD = os.environ.get("MY_PASSWORD")
 
 now = dt.datetime.now()
 curr_day = now.day
